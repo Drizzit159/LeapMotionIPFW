@@ -1,0 +1,114 @@
+import java.io.*;
+import java.lang.Math;
+import com.leapmotion.leap.*;
+import com.leapmotion.leap.Gesture.State;
+
+public class LeapShow extends Listener {
+
+	public void onInit(Controller controller) {
+
+	}
+
+	public void onConnect(Controller controller) {
+		System.out.println("Welcome to Leap Show");
+		//enables allowed motions
+		controller.enableGesture(Gesture.Type.TYPE_SWIPE);
+		controller.enableGesture(Gesture.Type.TYPE_CIRCLE);
+		controller.enableGesture(Gesture.Type.TYPE_SCREEN_TAP);
+	}
+
+	public void onDisconnect(Controller controller) {
+		System.out.println("running");
+	}
+
+	public void onExit(Controller controller) {
+		System.out.println("running");
+	}
+
+	public void onFrame(Controller controller) {
+		//creates a frame from the controller
+		Frame frame = controller.frame();
+		
+		//list of frames 
+		GestureList gestures = frame.gestures();
+		
+		//loops based on the number of gestures 
+		for (int k = 0; k < gestures.count(); k++) {
+			
+			//gets the next gesture
+			Gesture type = gestures.get(k);
+
+			//decides what to do based on the type of gesture
+			switch (type.type()) {
+			
+			case TYPE_SCREEN_TAP:
+				System.out.println("tap");
+				break;
+
+			case TYPE_SWIPE:
+				SwipeGesture swipe = new SwipeGesture(type);
+
+				// if the x-axis of the swipe is greater than the y-axis then it is a 
+				// horizontal swipe .get(0) = x-axis .get(1) = y-axis
+				if (Math.abs(swipe.direction().get(0)) > Math.abs(swipe
+						.direction().get(1))) {
+					
+					if (swipe.startPosition().get(0) < 0) {
+						System.out.println("right");
+					} else {
+						System.out.println("left");
+					}
+
+				} else {
+					if (swipe.direction().get(1) > 0) {
+						System.out.println("up");
+					} else {
+						System.out.println("down");
+					}
+
+				}
+				break;
+			
+			case TYPE_CIRCLE:
+				CircleGesture circle = new CircleGesture(type);
+
+				// Clockwise if angle is less than 90 degrees
+				if (circle.pointable().direction().angleTo(circle.normal()) <= Math.PI/2) {
+                   System.out.println("clockwise");
+                } else {
+                    System.out.println("conterclockwise");
+                }
+
+                // Calculate angle swept since last frame
+                double sweptAngle = 0;
+                if (circle.state() != State.STATE_START) {
+                    CircleGesture previousUpdate = new CircleGesture(controller.frame(1).gesture(circle.id()));
+                    sweptAngle = (circle.progress() - previousUpdate.progress()) * 2 * Math.PI;
+                    System.out.println(sweptAngle);
+
+                }
+ 
+				break;
+			default:
+				System.out.println("unsupported");
+				break;
+
+			}
+		}
+	}
+
+	public static void main(String[] args) {
+		Controller cont = new Controller();
+		LeapShow sl = new LeapShow();
+
+		cont.addListener(sl);
+
+		try {
+			System.in.read();
+		} catch (IOException e) {
+
+		}
+
+	}
+
+}
