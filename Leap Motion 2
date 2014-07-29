@@ -1,0 +1,184 @@
+import java.io.*;
+import java.lang.Math;
+
+import javax.swing.JLabel;
+
+import com.leapmotion.leap.*;
+
+//import com.leapmotion.leap.Gesture.State;
+
+public class LeapShow extends Listener {
+	private String direction;
+	private String rotation;
+	private LeapGUI lg;
+	private JLabel setter;
+	private Slideshow that;
+
+	public void onInit(Controller controller) {
+	}
+
+	public void onConnect(Controller controller) {
+		lg = new LeapGUI();
+		setter = lg.getJlb();
+		// enables allowed motions
+		controller.enableGesture(Gesture.Type.TYPE_SWIPE);
+		controller.enableGesture(Gesture.Type.TYPE_CIRCLE);
+		controller.enableGesture(Gesture.Type.TYPE_SCREEN_TAP);
+	}
+
+	public void onDisconnect(Controller controller) {
+		System.exit(0);
+	}
+
+	public void onExit(Controller controller) {
+		System.out.println("running");
+	}
+
+	public void onFrame(Controller controller) {
+
+		// creates a frame from the last frame captured by the controller
+		Frame frame = controller.frame();
+
+		// list of frames
+		GestureList gestures = frame.gestures();
+
+		for (Hand hand : frame.hands()) {
+			if (hand.grabStrength() == 1 && that != null) {
+				that.reset();
+			}
+		}
+
+		if (gestures.count() > 0) {
+			// loops based on the number of gestures
+			for (int k = 0; k < 1; k++) {
+
+				// gets the next gesture
+				Gesture type = gestures.get(k);
+
+				// decides what to do based on the type of gesture
+				switch (type.type()) {
+
+				case TYPE_SCREEN_TAP:
+					setter.setText("Tap");
+					if (that != null) {
+						that.setInvisible();
+					} else {
+						that = new Slideshow();
+						that.buildWindow();
+					}
+					break;
+
+				case TYPE_SWIPE:
+					SwipeGesture swipe = new SwipeGesture(type);
+
+					// if the x-axis of the swipe is greater than the y-axis
+					// then it
+					// is a horizontal swipe .get(0) = x-axis .get(1) =
+					// y-axis
+					if (Math.abs(swipe.direction().get(0)) > Math.abs(swipe
+							.direction().get(1))) {
+
+						if (swipe.startPosition().get(0) < 0) {
+							direction = "right";
+							setter.setText("Current direction is " + direction);
+
+							if (that != null) {
+								if (gestures.get(k).durationSeconds() > .3) {
+									that.pushNext();
+								}
+
+							}
+
+						} else {
+							direction = "left";
+							setter.setText("Current direction is " + direction);
+
+							if (that != null) {
+								if (gestures.get(k).durationSeconds() > .3) {
+									that.pushBack();
+								}
+
+							}
+
+						}
+
+					} else {
+						if (swipe.direction().get(1) > 0) {
+								direction = "up";
+								setter.setText("Current direction is "
+										+ direction);
+
+								if (that != null) {
+									that.scaleUp();
+								}
+						}  else {
+							direction = "down";
+							setter.setText("Current direction is "
+									+ direction);
+
+								if (that != null) {
+									that.scaleDown();
+								}
+						}
+					}
+					break;
+
+				case TYPE_CIRCLE:
+					CircleGesture circle = new CircleGesture(type);
+					// double sweptAngle = 0;
+					// if (circle.state() != State.STATE_START) {
+					// CircleGesture previousUpdate = new CircleGesture(
+					// controller.frame(1).gesture(circle.id()));
+					// sweptAngle = (circle.progress() - previousUpdate
+					// .progress()) * 2 * Math.PI;
+					//
+					// }
+
+					// Clockwise if angle is less than 90 degrees
+					if (circle.pointable().direction().angleTo(circle.normal()) <= Math.PI / 2) {
+						if (that != null) {
+							if (gestures.get(k).durationSeconds() > .15) {
+								that.rotateRight();
+							}
+						} else {
+							rotation = "clockwise";
+							setter.setText("Current rotation is " + rotation);
+						}
+					} else {
+						if (gestures.get(k).durationSeconds() > .15) {
+
+							if (that != null) {
+								that.rotateLeft();
+							}
+						} else {
+							rotation = "conterclockwise";
+							setter.setText("Current rotation is " + rotation);
+						}
+					}
+					// Calculate angle swept since last frame
+
+					break;
+				default:
+					System.out.println("unsupported");
+					break;
+
+				}
+			}
+		}
+	}
+
+	public static void main(String[] args) {
+		Controller cont = new Controller();
+		LeapShow sl = new LeapShow();
+
+		cont.addListener(sl);
+
+		try {
+			System.in.read();
+		} catch (IOException e) {
+
+		}
+
+	}
+
+}
