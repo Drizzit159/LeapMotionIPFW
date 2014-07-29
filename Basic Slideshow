@@ -1,0 +1,195 @@
+import java.io.*;
+import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+
+@SuppressWarnings("serial")
+public class Slideshow extends Component {
+	private File dir;
+	private String[] extensions = { "jpg", "gif" };
+	private FilenameFilter reader;
+	private JButton back;
+	private JButton next;
+	private JButton scaleUp;
+	private JButton scaleDown;
+	private JButton rotateRight;
+	private JButton rotateLeft;
+	private JButton reset;
+	private ArrayList<BufferedImage> imgs;
+	private JFrame frame;
+	private static int counter = 0;
+	private static double scale = 0.3;
+	private static double angle = 0;
+	 
+
+	public void paint(Graphics g) {
+		try {
+			Graphics2D g2 = (Graphics2D) g;
+			double rotation = Math.toRadians(angle);
+			int newW = (int) (imgs.get(counter).getWidth() * scale);
+			int newH = (int) (imgs.get(counter).getHeight() * scale);
+			int x = (this.getWidth() - newW) / 2;
+			int y = (this.getHeight() - newH) / 2;
+			double locationX = imgs.get(counter).getWidth()/2;
+			double locationY = imgs.get(counter).getHeight()/2;
+			AffineTransform tx = AffineTransform.getRotateInstance(rotation, locationX, locationY);
+			AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+
+
+			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+					RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2.drawImage(op.filter(imgs.get(counter),null), x, y, newW, newH, null);
+		} catch (NullPointerException e) {
+
+		}
+	}
+
+	public Slideshow() {
+		imgs = new ArrayList<BufferedImage>(1000);
+
+		dir = new File("C:/Users/Mark/Pictures/Testing");
+
+		reader = new FilenameFilter() {
+
+			@Override
+			public boolean accept(File dir, String name) {
+				for (String ex : extensions) {
+					if (name.endsWith("." + ex))
+						;
+					return true;
+				}
+				return false;
+			}
+		};
+
+		if (dir.isDirectory()) {
+			for (File that : dir.listFiles(reader)) {
+				try {
+					imgs.add(ImageIO.read(that));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	}
+
+	public void buildWindow() {
+		frame = new JFrame();
+		back = new JButton();
+		next = new JButton();
+		scaleUp = new JButton();
+		scaleDown = new JButton();
+		rotateRight = new JButton();
+		rotateLeft = new JButton();
+		reset = new JButton();
+		
+		reset.addActionListener(new ButtonListener());
+		rotateRight.addActionListener(new ButtonListener());
+		rotateLeft.addActionListener(new ButtonListener());
+		scaleUp.addActionListener(new ButtonListener());
+		scaleDown.addActionListener(new ButtonListener());
+		next.addActionListener(new ButtonListener());
+		back.addActionListener(new ButtonListener());
+
+		frame.add(new Slideshow());
+
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+		frame.setUndecorated(false);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+
+	}
+	
+	public void pushNext(){
+		next.doClick();
+	}
+	
+	public void pushBack(){
+		back.doClick();
+	}
+	
+	public void scaleUp(){
+		scaleUp.doClick();
+	}
+	
+	public void scaleDown(){
+		scaleDown.doClick();
+	}
+	
+	public void rotateRight(){
+		rotateRight.doClick();
+	}
+	
+	public void rotateLeft(){
+		rotateLeft.doClick();
+	}
+	
+	public void reset(){
+		reset.doClick();
+	}
+	
+	public void setInvisible(){
+		if (frame.isVisible() == true){
+			frame.setVisible(false);
+		} else {
+			frame.setVisible(true);
+		}
+	}
+
+	private class ButtonListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (e.getSource() == next) {
+				counter++;
+				if (counter > imgs.size() - 1) {
+					counter = 0;
+				}
+				frame.repaint();
+
+			} else if (e.getSource() == back) {
+				counter--;
+				if (counter < 0) {
+					counter = imgs.size() - 1;
+				}
+				frame.repaint();
+
+			} else if (e.getSource() == scaleUp){
+				scale += 0.1;
+				frame.repaint();
+			} else if (e.getSource() == scaleDown){
+				scale -= 0.1;
+				if (scale <= 0.1){
+					scale = 0.1;
+				}
+				frame.repaint();
+			} else if (e.getSource() == rotateRight){
+				angle += 45;
+				frame.repaint();
+			} else if (e.getSource() == rotateLeft){
+				angle -= 45;
+				frame.repaint();
+			} else {
+				scale = 0.3;
+				angle = 0;
+				frame.repaint();
+			}
+		}
+
+	}
+
+	public static void main(String[] args) {
+		Slideshow that = new Slideshow();
+		that.buildWindow();
+	}
+}
