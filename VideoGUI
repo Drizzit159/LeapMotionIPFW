@@ -1,0 +1,266 @@
+package VLC;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.concurrent.TimeUnit;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import uk.co.caprica.vlcj.binding.LibVlc;
+import uk.co.caprica.vlcj.player.MediaPlayerFactory;
+import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
+
+public class VideoGUI {
+
+	private JButton playPause;
+	private JButton pause;
+	private JButton ff;
+	private JButton rewind;
+	private JButton stop;
+	private JButton exit;
+	
+	private JLabel blank1 = new JLabel();
+	private JTextField currentTime;
+	private JTextField rate;
+	private int speed;
+	private EmbeddedMediaPlayer mediaPlayer;
+	private MediaPlayerFactory mediaPlayerFactory;
+	private static final int SKIP_TIME_MS = 10 * 1000;
+	
+	private JLabel timeLabel;
+	
+	private JSlider positionSlider;
+
+	public static void main(final String[] args) {
+		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(),
+				"C:\\Program Files\\VideoLAN\\VLC");
+		Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
+
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				VideoGUI cd = new VideoGUI();
+				cd.Player();
+			}
+		});
+	}
+
+	public void Player() {
+		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(),
+				"C:\\Program Files\\VideoLAN\\VLC");
+		Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
+
+		JFrame frame = new JFrame("vlcj Tutorial");
+
+		Canvas c = new Canvas();
+		c.setBackground(Color.black);
+		JPanel p = new JPanel();
+		rate = new JTextField("Frame speed: x1");
+		currentTime = new JTextField();
+		timeLabel = new JLabel("hh:mm:ss");
+		playPause = new JButton("Play/Pause");
+		playPause.addActionListener(new ButtonListener());
+		//pause = new JButton("Pause");
+		//pause.addActionListener(new ButtonListener());
+		ff = new JButton("Fast Forward");
+		ff.addActionListener(new ButtonListener());
+		rewind = new JButton("Rewind");
+		rewind.addActionListener(new ButtonListener());
+		stop = new JButton("Stop");
+		stop.addActionListener(new ButtonListener());
+		exit = new JButton("Exit");
+		exit.addActionListener(new ButtonListener());
+		/*
+		positionSlider = new JSlider();
+	    positionSlider.setMinimum(0);
+	    positionSlider.setMaximum(1000);
+	    positionSlider.setValue(0);
+	    positionSlider.setMajorTickSpacing(20);
+	    positionSlider.setMinorTickSpacing(5);
+	    positionSlider.setPaintTicks(true);
+	    positionSlider.setPaintLabels(true);
+	    positionSlider.addChangeListener(new SlideListener());
+	    */
+		p.setLayout(new BorderLayout());
+		p.add(c, BorderLayout.CENTER);
+		JPanel buttons = new JPanel(new GridLayout(3, 4));
+		buttons.add(playPause);
+		buttons.add(blank1);
+		buttons.add(ff);
+		buttons.add(rewind);
+		buttons.add(blank1);
+		buttons.add(rate);
+		//buttons.add(timeLabel);
+		//buttons.add(currentTime);
+		
+		buttons.add(blank1);
+		buttons.add(blank1);
+		buttons.add(blank1);
+		buttons.add(blank1);
+		buttons.add(stop);
+		buttons.add(exit);
+		//JPanel interaction = new JPanel(new BorderLayout());
+		//interaction.add(buttons, BorderLayout.CENTER);
+		//interaction.add(positionSlider, BorderLayout.SOUTH);
+		frame.add(p, BorderLayout.CENTER);
+		frame.add(buttons, BorderLayout.SOUTH);
+		
+		mediaPlayerFactory = new MediaPlayerFactory();
+		mediaPlayer = mediaPlayerFactory.newEmbeddedMediaPlayer();
+		mediaPlayer.setVideoSurface(mediaPlayerFactory.newVideoSurface(c));
+		currentTime.setText(" " + mediaPlayer.getTime() + "/" + mediaPlayer.canPause());
+		// time = new JLabel("Current time: " + mediaPlayer.getTime() + "/" );
+		frame.setLocation(100, 100);
+		frame.setSize(1050, 600);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setVisible(true);
+        mediaPlayer.startMedia("C:\\Test.m4v");
+		mediaPlayer.setPause(false);
+		
+
+	}
+	
+	public void run(){
+		
+	}
+
+	public class ButtonListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// Play button
+			if (e.getSource() == playPause) {
+				if (speed != 0) {
+					mediaPlayer.setRate(1);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed = 0;
+				}
+				if(mediaPlayer.isPlaying() == true){
+					mediaPlayer.setPause(false);
+				}
+				else if(mediaPlayer.isPlaying() == false){
+					mediaPlayer.setPause(true);
+				}
+			}
+			
+			// FastForward Button
+			if (e.getSource() == ff) {
+				if (speed == 0) {
+					mediaPlayer.setRate(2);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed++;
+				} else if (speed == 1) {
+					mediaPlayer.setRate(4);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed++;
+				} else if (speed == 2) {
+					mediaPlayer.setRate(8);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed++;
+				} else if (speed == 3) {
+					mediaPlayer.setRate(16);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed++;
+				} else if (speed == 4) {
+					mediaPlayer.setRate(32);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed++;
+				} else if (speed < 0) {
+					mediaPlayer.setRate(1);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed = 0;
+				}
+				System.out.println(mediaPlayer.getRate());
+			}
+			// Rewind Button
+			if (e.getSource() == rewind) {
+				skip(-SKIP_TIME_MS);
+			
+		    if (speed > 0) {
+					mediaPlayer.setRate(1);
+					rate.setText("Frame speed: x" + mediaPlayer.getRate());
+					speed = 0;
+			}
+				
+			}
+
+			if (e.getSource() == stop) {
+				mediaPlayer.stop();
+			}
+			if (e.getSource() == exit) {
+				mediaPlayer.stop();
+				System.exit(0);
+			}
+
+		}//end action performed method
+
+	}// end button listener
+	public class SlideListener implements ChangeListener  {
+
+		@Override
+		public void stateChanged(ChangeEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	/*private void registerListeners() implements MouseListener {
+	       
+	    positionSlider.addMouseListener(new MouseAdapter() {
+	      @Override
+	      public void mousePressed(MouseEvent e) {
+	        if(mediaPlayer.isPlaying()) {
+	          mousePressedPlaying = true;
+	          mediaPlayer.pause();
+	        }
+	        else {
+	          mousePressedPlaying = false;
+	        }
+	        setSliderBasedPosition();
+	      }
+	    }
+	}*/
+	
+	public void pushPlayPause(){
+		playPause.doClick();
+	}
+	public void pushPause(){
+		pause.doClick();
+	}
+	public void pushFF(){
+		ff.doClick();
+	}
+	public void pushRewind(){
+		rewind.doClick();
+	}
+	public void pushStop(){
+		stop.doClick();
+	}
+	public void pushExit(){
+		exit.doClick();
+	}
+	private void skip(int skipTime) {
+		    // Only skip time if can handle time setting
+		if(mediaPlayer.getLength() > 0) {
+		      mediaPlayer.skip(skipTime);
+		}
+    }
+	
+	
+	
+
+}// end class
