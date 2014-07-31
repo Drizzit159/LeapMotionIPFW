@@ -144,15 +144,16 @@ public class VideoGUI {
 		public void actionPerformed(ActionEvent e) {
 			// Play button
 			if (e.getSource() == playPause) {
-				if (speed != 0) {
+				if (speed != 0 && mediaPlayer.isPlaying() == true ) {
 					mediaPlayer.setRate(1);
 					rate.setText("Frame speed: x" + mediaPlayer.getRate());
 					speed = 0;
-				}
-				if(mediaPlayer.isPlaying() == true){
 					mediaPlayer.setPause(false);
 				}
-				else if(mediaPlayer.isPlaying() == false){
+				else if(mediaPlayer.isPlaying() == false ){
+					mediaPlayer.setPause(false);
+				}
+				else if(mediaPlayer.isPlaying() == true){
 					mediaPlayer.setPause(true);
 				}
 			}
