@@ -1,0 +1,223 @@
+package VLC;
+
+import java.io.*;
+import java.lang.Math;
+import javax.swing.JLabel;
+import com.leapmotion.leap.*;
+
+//import com.leapmotion.leap.Gesture.State;
+
+public class VideoGUIWithNewLeap extends Listener {
+	private String direction;
+	private String rotation;
+	private LeapGUIBasic lg;
+	private JLabel setter;
+	private VideoGUI that;
+	private String video = "E:\\Java\\MyWorkspace\\LeapMotion\\Test2.mkv";
+
+	public void onInit(Controller controller) {
+	}
+
+	public void onConnect(Controller controller) {
+		lg = new LeapGUIBasic();
+		setter = lg.getJlb();
+		// that = new Slideshow();
+		// that.buildWindow();
+
+		// enables allowed motions
+		controller.enableGesture(Gesture.Type.TYPE_SWIPE);
+		controller.enableGesture(Gesture.Type.TYPE_CIRCLE);
+		controller.enableGesture(Gesture.Type.TYPE_SCREEN_TAP);
+	}
+
+	public void onDisconnect(Controller controller) {
+		System.exit(0);
+	}
+
+	public void onExit(Controller controller) {
+		System.out.println("running");
+	}
+
+	public void onFrame(Controller controller) {
+		// creates a frame from the last frame captured by the controller
+		Frame frame = controller.frame();
+
+		// list of frames
+		GestureList gestures = frame.gestures();
+
+		for (Hand hand : frame.hands()) {
+			if (hand.isLeft()) {
+				if (hand.grabStrength() == 1 && that != null) {
+					that.pushExit();
+					that = null;
+				}
+			}
+			if (hand.isRight()) {
+				if (hand.grabStrength() == 1 && that != null) {
+					that.pushStop();
+				}
+			}
+		}
+
+		float xUpdate = 0;
+		boolean start = true;
+		// loops based on the number of gestures
+		for (int k = 0; k < 1; k++) {
+
+			// gets the next gesture
+			Gesture type = gestures.get(k);
+
+			// decides what to do based on the type of gesture
+			switch (type.type()) {
+
+			/*
+			 * case TYPE_SCREEN_TAP: setter.setText("Tap"); if (that != null) {
+			 * that.setInvisible(); } else {
+			 * 
+			 * } break;
+			 */
+			case TYPE_SWIPE:
+				SwipeGesture swipe = new SwipeGesture(type);
+				// System.out.println(swipe.duration());
+				// System.out.println(swipe.speed());
+				// System.out.println(swipe.direction());
+				// System.out.println(swipe.durationSeconds());
+				// System.out.println(swipe.startPosition());
+				// System.out.println(swipe.state());
+				// System.out.println(swipe.state());
+				if (Math.abs(swipe.direction().get(0)) > Math.abs(swipe
+						.direction().get(1))) {
+					if (swipe.state() == Gesture.State.STATE_START) {
+						System.out.println(swipe.state());
+						start = true;
+						if (that == null) {
+							that = new VideoGUI();
+							that.Player(video);
+						}
+					} else if (swipe.state() == Gesture.State.STATE_UPDATE) {
+						System.out.println(swipe.state());
+						xUpdate = swipe.position().getX();
+					} else if (swipe.state() == Gesture.State.STATE_STOP) {
+						System.out.println("U: " + xUpdate);
+
+						if (start == true) {
+
+							start = false;
+							System.out.println(swipe.direction().getX());
+							xUpdate = swipe.direction().getX();
+
+							if (xUpdate > 0) {
+								System.out.println("Should move");
+								that.pushPlayPause();
+								System.out.println("moved");
+							}
+							if (xUpdate < 0) {
+								System.out.println("Should move");
+								that.pushPlayPause();
+								System.out.println("moved");
+							}
+							try {
+								Thread.sleep(1500);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+
+				} else {
+					if (swipe.direction().get(1) > 0) {
+						direction = "up";
+						setter.setText("Current direction is " + direction);
+
+						if (that != null) {
+							that.pushPlayPause();
+						}
+						try {
+							Thread.sleep(1500);
+						} catch (InterruptedException e) {
+
+							e.printStackTrace();
+						}
+					} else {
+						direction = "down";
+						setter.setText("Current direction is " + direction);
+
+						if (that != null) {
+							that.pushPlayPause();
+						}
+						try {
+							Thread.sleep(1500);
+						} catch (InterruptedException e) {
+
+							e.printStackTrace();
+						}
+					}
+
+				}
+
+				break;
+
+			case TYPE_CIRCLE:
+				CircleGesture circle = new CircleGesture(type);
+				// double sweptAngle = 0;
+				// if (circle.state() != State.STATE_START) {
+				// CircleGesture previousUpdate = new CircleGesture(
+				// controller.frame(1).gesture(circle.id()));
+				// sweptAngle = (circle.progress() - previousUpdate
+				// .progress()) * 2 * Math.PI;
+				//
+				// }
+
+				// Clockwise if angle is less than 90 degrees
+				if (circle.pointable().direction().angleTo(circle.normal()) <= Math.PI / 2) {
+					if (that != null) {
+						that.pushFF();
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					} else {
+						rotation = "clockwise";
+						setter.setText("Current rotation is " + rotation);
+					}
+				} else {
+
+					if (that != null) {
+						that.pushRewind();
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					} else {
+						rotation = "conterclockwise";
+						setter.setText("Current rotation is " + rotation);
+					}
+				}
+				// Calculate angle swept since last frame
+
+				break;
+			default:
+				// System.out.println("unsupported");
+				break;
+
+			}
+		}
+	}
+
+	public static void main(String[] args) {
+		Controller cont = new Controller();
+		VideoGUIWithNewLeap sl = new VideoGUIWithNewLeap();
+
+		cont.addListener(sl);
+
+		try {
+			System.in.read();
+		} catch (IOException e) {
+
+		}
+
+	}
+
+}
